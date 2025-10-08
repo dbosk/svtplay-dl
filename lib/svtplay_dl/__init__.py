@@ -20,6 +20,16 @@ log = logging.getLogger("svtplay_dl")
 
 
 def setup_log(silent, verbose=False):
+    """
+    Configure logging output for the application.
+    
+    Sets up logging handlers with appropriate format and level based on
+    verbosity settings.
+    
+    Args:
+        silent: If True, log only to stderr with minimal output
+        verbose: If True, enable debug logging with detailed format
+    """
     logging.addLevelName(25, "INFO")
     fmt = "%(levelname)s: %(message)s"
     if silent:

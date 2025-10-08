@@ -19,7 +19,23 @@ retry = Retry(total=5, read=5, connect=5, backoff_factor=0.3, status_forcelist=(
 
 
 class HTTP(Session):
+    """
+    HTTP client session with custom configuration and retry logic.
+    
+    Extends requests.Session with application-specific settings including
+    SSL verification, proxy support, custom headers, and automatic retries.
+    """
+    
     def __init__(self, config={}, *args, **kwargs):
+        """
+        Initialize HTTP session with configuration.
+        
+        Args:
+            config: Configuration dictionary with ssl_verify, proxy, timeout,
+                   http_headers, and cookies settings
+            *args: Additional arguments for Session
+            **kwargs: Additional keyword arguments for Session
+        """
         Session.__init__(self, *args, **kwargs)
         adapter = HTTPAdapter(max_retries=retry)
 
@@ -35,6 +51,15 @@ class HTTP(Session):
         self.headers.update({"User-Agent": FIREFOX_UA})
 
     def check_redirect(self, url):
+        """
+        Check if URL redirects and return final URL.
+        
+        Args:
+            url: URL to check for redirects
+            
+        Returns:
+            str: Final URL after following redirects
+        """
         return self.get(url, stream=True).url
 
     def request(self, method, url, *args, **kwargs):
@@ -50,10 +75,30 @@ class HTTP(Session):
         return res
 
     def split_header(self, headers):
+        """
+        Parse semicolon-separated header string into dictionary.
+        
+        Args:
+            headers: String of headers in format "key1=value1;key2=value2"
+            
+        Returns:
+            dict: Parsed headers as key-value pairs
+        """
         return dict(x.split("=") for x in headers.split(";") if x)
 
 
 def download_thumbnails(output, config, urls):
+    """
+    Download thumbnail images for video content.
+    
+    Downloads show and episode thumbnails, saving them with appropriate
+    naming conventions.
+    
+    Args:
+        output: Output configuration dictionary with metadata
+        config: Configuration object with output path settings
+        urls: List of tuples (is_show: bool, url: str) for thumbnails to download
+    """
     for show, url in urls:
         if "&amp;" in url:
             url = unescape(url)
@@ -78,6 +123,18 @@ def download_thumbnails(output, config, urls):
 
 
 def get_full_url(url, srcurl):
+    """
+    Resolve relative URL to absolute URL using source URL as base.
+    
+    Handles absolute URLs, root-relative URLs, and path-relative URLs.
+    
+    Args:
+        url: URL to resolve (may be relative or absolute)
+        srcurl: Source/base URL to resolve against
+        
+    Returns:
+        str: Absolute URL
+    """
     if url[:4] == "http":
         return url
     if url[0] == "/":

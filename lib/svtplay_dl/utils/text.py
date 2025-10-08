@@ -55,6 +55,16 @@ def filenamify(title):
 
 
 def exclude(config, name):
+    """
+    Check if a filename should be excluded based on configuration.
+    
+    Args:
+        config: Configuration object with exclude patterns
+        name: Filename or path object to check
+        
+    Returns:
+        bool: True if filename should be excluded, False otherwise
+    """
     if config.get("exclude"):
         excludes = config.get("exclude").split(",")
         for exclude in excludes:

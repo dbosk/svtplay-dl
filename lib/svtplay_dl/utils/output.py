@@ -116,6 +116,15 @@ def progressbar(total, pos, msg=""):
 
 
 def filename(stream):
+    """
+    Extract and set filename from HTML title tag if not already set.
+    
+    Args:
+        stream: Stream object containing output and configuration
+        
+    Returns:
+        bool: True if title is set or extracted successfully, False otherwise
+    """
     if stream.output["title"] is None:
         data = ensure_unicode(stream.get_urldata())
         if data is None:
@@ -129,6 +138,15 @@ def filename(stream):
 
 
 def sanitize(name):
+    """
+    Remove invalid characters from filename for cross-platform compatibility.
+    
+    Args:
+        name: Pathlib Path object containing filename
+        
+    Returns:
+        Path: Sanitized path object with invalid characters removed
+    """
     dirname = name.parent
     basename = str(name.name)
     blocklist = [":", "*", "?", '"', "<", ">", "|", "\0"]
@@ -140,6 +158,19 @@ def sanitize(name):
 
 
 def formatname(output, config):
+    """
+    Generate formatted output filename based on configuration and metadata.
+    
+    Creates filename from template with proper directory structure including
+    optional subfolders based on content type (TV show or movie).
+    
+    Args:
+        output: Dictionary containing metadata (title, season, episode, etc.)
+        config: Configuration object with filename template and output settings
+        
+    Returns:
+        Path: Complete path object for output file
+    """
     name = pathlib.Path(_formatname(output, config))
     subfolder = None
     dirname = None
@@ -177,6 +208,19 @@ def formatname(output, config):
 
 
 def _formatname(output, config):
+    """
+    Generate filename from template by replacing placeholders with metadata.
+    
+    Internal helper function that substitutes template variables like {title},
+    {season}, {episode} with actual values from output metadata.
+    
+    Args:
+        output: Dictionary containing metadata values
+        config: Configuration object with filename template
+        
+    Returns:
+        str: Formatted filename string with placeholders replaced
+    """
     name = config.get("filename")
     for key in output:
         if key == "title" and output[key]:
@@ -210,6 +254,20 @@ def _formatname(output, config):
 
 
 def find_dupes(output, config, video=True):
+    """
+    Check for duplicate files and create output directory if needed.
+    
+    Checks if output file already exists to avoid overwriting unless forced.
+    Creates necessary directories for output file.
+    
+    Args:
+        output: Dictionary containing output metadata
+        config: Configuration object with force and output settings
+        video: Whether to check for video file duplicates (default: True)
+        
+    Returns:
+        tuple: (found_dupe: bool, existing_file: Path or None)
+    """
     otherfiles = [".srt", ".smi", ".tt", ".sami", ".wrst", ".tbn", ".nfo"]
     name = formatname(output, config)
 

@@ -13,10 +13,26 @@ from svtplay_dl.utils.parser import setup_defaults
 
 
 class Service:
+    """
+    Base class for media service handlers.
+    
+    Provides common functionality for accessing and downloading media from
+    various streaming services. Each service-specific implementation inherits
+    from this class and implements the get() method.
+    """
+    
     supported_domains = []
     supported_domains_re = []
 
     def __init__(self, config, _url, http=None):
+        """
+        Initialize service handler.
+        
+        Args:
+            config: Configuration object with download settings
+            _url: URL of the media to download
+            http: Optional HTTP client instance (creates new if not provided)
+        """
         self._url = _url
         self._urldata = None
         self._error = False
@@ -63,12 +79,27 @@ class Service:
         return self._url
 
     def get_urldata(self):
+        """
+        Fetch and cache URL content.
+        
+        Returns:
+            str: HTML/text content of the URL
+        """
         if self._urldata is None:
             self._urldata = self.http.request("get", self.url).text
         return self._urldata
 
     @classmethod
     def handles(cls, url):
+        """
+        Check if this service can handle the given URL.
+        
+        Args:
+            url: URL string to check
+            
+        Returns:
+            bool: True if this service supports the URL, False otherwise
+        """
         urlp = urlparse(url)
 
         # Apply supported_domains_re regexp to the netloc. This

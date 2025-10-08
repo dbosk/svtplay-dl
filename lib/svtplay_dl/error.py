@@ -3,10 +3,12 @@
 
 
 class UIException(Exception):
+    """Base exception class for user interface errors in svtplay-dl."""
     pass
 
 
 class ServiceError(Exception):
+    """Exception class for service-related errors when accessing media providers."""
     pass
 
 

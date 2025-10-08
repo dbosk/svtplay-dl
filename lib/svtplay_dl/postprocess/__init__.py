@@ -20,7 +20,22 @@ version = __version__.get_versions()["version"]
 
 
 class postprocess:
+    """
+    Post-processing handler for merging video, audio, and subtitle files.
+    
+    Handles merging of separate video/audio streams and subtitle files into
+    a single container using ffmpeg/avconv.
+    """
+    
     def __init__(self, stream, config, subfixes=None):
+        """
+        Initialize post-processor.
+        
+        Args:
+            stream: VideoRetriever object with downloaded stream information
+            config: Configuration object with processing settings
+            subfixes: Optional list of subtitle objects to merge
+        """
         self.stream = stream
         self.config = config
         self.subfixes = [x.subfix for x in subtitle_filter(subfixes)]
@@ -35,6 +50,15 @@ class postprocess:
                 self.detect = path
 
     def merge(self, merge_subtitle):
+        """
+        Merge video, audio, and optionally subtitle files into single container.
+        
+        Uses ffmpeg/avconv to combine separate video and audio streams,
+        and optionally embed subtitles into the final file.
+        
+        Args:
+            merge_subtitle: Whether to embed subtitles in the output file
+        """
         if self.detect is None:
             logging.error("Cant detect ffmpeg or avconv. Cant mux files without it.")
             return

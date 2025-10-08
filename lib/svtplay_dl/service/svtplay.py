@@ -32,11 +32,29 @@ LIVE_CHANNELS = {
 
 
 class Svtplay(Service, MetadataThumbMixin):
+    """
+    Service handler for SVT Play (svtplay.se).
+    
+    Handles downloading from Swedish public television's streaming service,
+    including live channels, on-demand content, and series episodes.
+    """
+    
     supported_domains = ["svtplay.se", "svt.se", "beta.svtplay.se", "svtflow.se"]
     info_search_expr = r"<script id=\"__NEXT_DATA__\" type=\"application\/json\">({.+})<\/script>"
     access = None
 
     def get(self):
+        """
+        Retrieve video streams and metadata from SVT Play URL.
+        
+        Handles both live channels and on-demand content. Extracts video ID
+        from page data, fetches stream information from API, and yields
+        available streams and subtitles.
+        
+        Yields:
+            VideoRetriever or subtitle: Stream objects for download
+            ServiceError: If video cannot be accessed or parsed
+        """
         parse = urlparse(self.url)
         if parse.netloc in ("www.svtplay.se", "svtplay.se"):
             if parse.path[:6] != "/video" and parse.path[:6] != "/klipp" and parse.path[:8] != "/kanaler":
@@ -102,6 +120,19 @@ class Svtplay(Service, MetadataThumbMixin):
         yield from videos
 
     def _get_video(self, janson):
+        """
+        Extract video streams and subtitles from SVT API response.
+        
+        Processes video references, handles DRM protection, manages alternative
+        tracks (audio description, sign language), and yields stream objects.
+        
+        Args:
+            janson: JSON response from SVT video API
+            
+        Yields:
+            VideoRetriever or subtitle: Stream objects for video/audio/subtitles
+            ServiceError: If no video references found
+        """
         entries = []
         subs = []
 
@@ -321,6 +352,18 @@ class Svtplay(Service, MetadataThumbMixin):
         return videos
 
     def find_all_episodes(self, config):
+        """
+        Find all episodes for a series or collection.
+        
+        Determines the type of listing (last chance, category, list, or series)
+        and retrieves all episode URLs, respecting reverse order and limit settings.
+        
+        Args:
+            config: Configuration object with all_last and reverse_list settings
+            
+        Returns:
+            list: Episode URLs in requested order
+        """
         parse = urlparse(self._url)
 
         episodes = []

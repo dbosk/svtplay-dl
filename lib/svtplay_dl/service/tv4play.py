@@ -16,9 +16,26 @@ from svtplay_dl.utils.http import download_thumbnails
 
 
 class Tv4play(Service, OpenGraphThumbMixin):
+    """
+    Service handler for TV4 Play (tv4play.se).
+    
+    Handles downloading from Swedish commercial television's streaming service.
+    Requires authentication token for access.
+    """
+    
     supported_domains = ["tv4play.se"]
 
     def get(self):
+        """
+        Retrieve video streams and metadata from TV4 Play URL.
+        
+        Requires valid authentication token. Extracts video ID from page data,
+        fetches playback information from API, and yields available streams.
+        
+        Yields:
+            VideoRetriever or subtitle: Stream objects for download
+            ServiceError: If authentication fails, video is DRM-protected, or cannot be accessed
+        """
         token = self._login()
         if token is None:
             yield ServiceError("You need a token to access the website. see https://svtplay-dl.se/tv4play/")

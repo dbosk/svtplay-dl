@@ -2,7 +2,24 @@ from svtplay_dl.utils.http import HTTP
 
 
 class VideoRetriever:
+    """
+    Base class for video stream retrievers.
+    
+    Provides common functionality for downloading video streams from various protocols.
+    Subclasses implement protocol-specific download methods (HLS, DASH, HTTP, etc.).
+    """
+    
     def __init__(self, config, url, bitrate, output, **kwargs):
+        """
+        Initialize video retriever.
+        
+        Args:
+            config: Configuration object with download settings
+            url: URL of the video stream
+            bitrate: Stream bitrate in bits per second
+            output: Output configuration dictionary
+            **kwargs: Additional options including audio, files, codec, resolution, etc.
+        """
         self.config = config
         self.url = url
         self.bitrate = int(bitrate) if bitrate else 0
@@ -32,4 +49,10 @@ class VideoRetriever:
 
     @property
     def name(self):
+        """
+        Get the name identifier for this retriever type.
+        
+        Returns:
+            str: Name of the retriever (to be implemented by subclasses)
+        """
         pass

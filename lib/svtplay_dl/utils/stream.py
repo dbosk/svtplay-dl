@@ -20,6 +20,15 @@ OPERATORS = {
 
 
 def sort_quality(data) -> list:
+    """
+    Sort video streams by quality (bitrate and name).
+    
+    Args:
+        data: List of VideoRetriever objects to sort
+        
+    Returns:
+        list: Sorted list of stream attributes [bitrate, name, format, resolution, language, role]
+    """
     data = sorted(data, key=lambda x: (x.bitrate, x.name), reverse=True)
     datas = []
     for i in data:
@@ -28,6 +37,15 @@ def sort_quality(data) -> list:
 
 
 def list_quality(videos):
+    """
+    Display available video stream qualities in tabular format.
+    
+    Logs a formatted table showing bitrate, method, codec, resolution,
+    language, and role for each available stream.
+    
+    Args:
+        videos: List of VideoRetriever objects to display
+    """
     data = [["Quality:", "Method:", "Codec:", "Resolution:", "Language:", "Role:"]]
     data.extend(sort_quality(videos))
     col_widths = [max(len(str(item)) for item in col) for col in zip(*data)]
@@ -53,12 +71,32 @@ def protocol_prio(streams, priolist) -> list:
 
 
 def format_prio(streams, priolist) -> list:
+    """
+    Filter streams by preferred format/codec priority.
+    
+    Args:
+        streams: List of VideoRetriever objects to filter
+        priolist: List of preferred formats in priority order
+        
+    Returns:
+        list: Filtered streams matching preferred formats
+    """
     logging.debug("Format priority: %s", str(priolist))
     prioritized = [s for s in streams if s.format in priolist]
     return prioritized
 
 
 def language_prio(config, streams) -> list:
+    """
+    Filter streams by preferred audio language.
+    
+    Args:
+        config: Configuration object with audio_language setting
+        streams: List of VideoRetriever objects to filter
+        
+    Returns:
+        list: Streams matching preferred language or main audio role
+    """
     if config.get("audio_language"):
         language = config.get("audio_language")
         prioritized = [s for s in streams if s.language == language]
@@ -68,6 +106,16 @@ def language_prio(config, streams) -> list:
 
 
 def video_role(config, streams) -> list:
+    """
+    Filter streams by video role (e.g., main, sign, audio-description).
+    
+    Args:
+        config: Configuration object with video_role setting
+        streams: List of VideoRetriever objects to filter
+        
+    Returns:
+        list: Streams matching specified video role, or all streams if not specified
+    """
     if config.get("video_role"):
         role = config.get("video_role")
     else:
@@ -78,6 +126,18 @@ def video_role(config, streams) -> list:
 
 
 def subtitle_filter(subtitles) -> list:
+    """
+    Filter subtitles by language preference.
+    
+    Returns unique subtitles based on language suffix, respecting
+    get_all_subtitles and subtitle_preferred configuration options.
+    
+    Args:
+        subtitles: List of subtitle objects to filter
+        
+    Returns:
+        list: Filtered list of unique subtitle objects
+    """
     languages = []
     subs = []
     if not subtitles:
@@ -103,6 +163,19 @@ def subtitle_filter(subtitles) -> list:
 
 
 def subtitle_decider(stream, subtitles):
+    """
+    Decide whether to download subtitles and handle the download.
+    
+    Downloads subtitles based on configuration (merge, separate, all languages).
+    Returns whether subtitles should be merged with video.
+    
+    Args:
+        stream: Service handler with configuration
+        subtitles: List of subtitle objects to process
+        
+    Returns:
+        bool: True if subtitles should be merged, False otherwise
+    """
     if subtitles and (stream.config.get("merge_subtitle") or stream.config.get("subtitle") or stream.config.get("get_all_subtitles")):
         subtitles = subtitle_filter(subtitles)
         if stream.config.get("get_all_subtitles"):
@@ -122,6 +195,19 @@ def subtitle_decider(stream, subtitles):
 
 
 def resolution(streams, resolutions: list) -> list:
+    """
+    Filter streams by resolution criteria.
+    
+    Supports exact match or comparison operators (>, <, >=, <=) for
+    vertical resolution filtering.
+    
+    Args:
+        streams: List of VideoRetriever objects to filter
+        resolutions: List of resolution criteria (e.g., ["720", ">=1080"])
+        
+    Returns:
+        list: Streams matching resolution criteria
+    """
     videos = []
     for stream in streams:
         for resolution in resolutions:
@@ -138,6 +224,22 @@ def resolution(streams, resolutions: list) -> list:
 
 
 def select_quality(config, streams):
+    """
+    Select best quality stream based on configuration criteria.
+    
+    Filters and selects streams based on quality, resolution, format, language,
+    video role, and protocol preferences. Returns the single best matching stream.
+    
+    Args:
+        config: Configuration object with quality preferences
+        streams: List of VideoRetriever objects to select from
+        
+    Returns:
+        VideoRetriever: Selected stream matching criteria
+        
+    Raises:
+        UIException: If no streams match criteria or quality is invalid
+    """
     high = 0
     if isinstance(config.get("quality"), str):
         try:

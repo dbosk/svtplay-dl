@@ -26,17 +26,50 @@ from svtplay_dl.utils.output import progressbar
 
 
 class HLSException(UIException):
+    """Exception raised for HLS-specific errors."""
+    
     def __init__(self, url, message):
+        """
+        Initialize HLS exception.
+        
+        Args:
+            url: URL of the HLS stream that caused the error
+            message: Error message
+        """
         self.url = url
         super().__init__(message)
 
 
 class LiveHLSException(HLSException):
+    """Exception raised when attempting to download live HLS streams."""
+    
     def __init__(self, url):
+        """
+        Initialize live HLS exception.
+        
+        Args:
+            url: URL of the live HLS stream
+        """
         super().__init__(url, "This is a live HLS stream, and they are not supported.")
 
 
 def hlsparse(config, res, url, output, **kwargs):
+    """
+    Parse HLS playlist from HTTP response.
+    
+    Entry point for HLS playlist parsing. Validates response and delegates
+    to internal parser.
+    
+    Args:
+        config: Configuration object with download settings
+        res: HTTP response object containing HLS playlist
+        url: URL of the HLS playlist
+        output: Output configuration dictionary
+        **kwargs: Additional options (cookies, authorization, etc.)
+        
+    Yields:
+        VideoRetriever or ServiceError: Stream objects or error
+    """
     if not res:
         return
 
@@ -48,6 +81,22 @@ def hlsparse(config, res, url, output, **kwargs):
 
 
 def _hlsparse(config, text, url, output, **kwargs):
+    """
+    Parse HLS playlist text and extract stream information.
+    
+    Internal parser that processes M3U8 playlists, handling master playlists
+    with multiple quality levels, alternative audio/video tracks, and subtitles.
+    
+    Args:
+        config: Configuration object with download settings
+        text: M3U8 playlist text content
+        url: Base URL for the playlist
+        output: Output configuration dictionary
+        **kwargs: Additional options (cookies, keycookie, authorization, etc.)
+        
+    Yields:
+        VideoRetriever or subtitle: Stream objects for video/audio/subtitles
+    """
     m3u8 = M3U8(text)
     keycookie = kwargs.pop("keycookie", None)
     cookies = kwargs.pop("cookies", None)

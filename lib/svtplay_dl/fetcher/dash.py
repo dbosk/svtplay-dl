@@ -31,19 +31,58 @@ class LiveDASHException(DASHException):
 
 
 class DASHattibutes:
+    """
+    Container for DASH manifest attributes.
+    
+    Stores and retrieves DASH stream attributes like timescale, duration,
+    bandwidth, etc.
+    """
+    
     def __init__(self):
+        """Initialize empty attributes dictionary."""
         self.default = {}
 
     def set(self, key, value):
+        """
+        Set an attribute value.
+        
+        Args:
+            key: Attribute name
+            value: Attribute value
+        """
         self.default[key] = value
 
     def get(self, key):
+        """
+        Get an attribute value.
+        
+        Args:
+            key: Attribute name
+            
+        Returns:
+            Attribute value if exists, otherwise 0
+        """
         if key in self.default:
             return self.default[key]
         return 0
 
 
 def templateelemt(attributes, element, filename, idnumber):
+    """
+    Generate list of segment URLs from DASH SegmentTemplate element.
+    
+    Parses DASH SegmentTemplate to create URLs for initialization segment
+    and all media segments based on timeline or duration.
+    
+    Args:
+        attributes: DASHattibutes object with stream metadata
+        element: XML element containing SegmentTemplate information
+        filename: Base URL for resolving relative segment URLs
+        idnumber: Representation ID for URL template substitution
+        
+    Returns:
+        list: List of URLs for initialization and media segments
+    """
     files = []
 
     init = element.attrib["initialization"]
@@ -124,6 +163,21 @@ def templateelemt(attributes, element, filename, idnumber):
 
 
 def adaptionset(attributes, elements, url, baseurl=None):
+    """
+    Parse DASH AdaptationSet elements and extract stream information.
+    
+    Processes AdaptationSet elements to extract representation details including
+    bitrate, resolution, codec, language, and segment URLs.
+    
+    Args:
+        attributes: DASHattibutes object with stream metadata
+        elements: List of AdaptationSet XML elements to parse
+        url: Base URL for the DASH manifest
+        baseurl: Optional base URL override for segment URLs
+        
+    Returns:
+        list: List of stream dictionaries with metadata and segment URLs
+    """
     streams = []
 
     dirname = os.path.dirname(url) + "/"

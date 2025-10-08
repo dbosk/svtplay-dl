@@ -16,9 +16,26 @@ from svtplay_dl.utils.http import download_thumbnails
 
 
 class Urplay(Service, OpenGraphThumbMixin):
+    """
+    Service handler for UR Play (urplay.se).
+    
+    Handles downloading from Swedish Educational Broadcasting Company's
+    streaming service, supporting both on-demand and series content.
+    """
+    
     supported_domains = ["urplay.se", "ur.se", "betaplay.ur.se", "urskola.se"]
 
     def get(self):
+        """
+        Retrieve video streams and metadata from UR Play URL.
+        
+        Extracts video ID from page data, fetches stream sources from API,
+        and yields available DASH and HLS streams.
+        
+        Yields:
+            VideoRetriever: Stream objects for download
+            ServiceError: If video info cannot be found or video is geoblocked
+        """
         urldata = self.get_urldata()
         match = re.search(r"__NEXT_DATA__\" type=\"application\/json\">({.+})<\/script>", urldata)
         if not match:
@@ -49,6 +66,18 @@ class Urplay(Service, OpenGraphThumbMixin):
         self.outputfilename(jsondata, urldata)
 
     def find_all_episodes(self, config):
+        """
+        Find all episodes in a series.
+        
+        Extracts season and episode information from series page and
+        returns list of episode URLs.
+        
+        Args:
+            config: Configuration object (unused but required by interface)
+            
+        Returns:
+            list: Episode URLs for the series
+        """
         episodes = []
 
         match = re.search(r"__NEXT_DATA__\" type=\"application\/json\">({.+})<\/script>", self.get_urldata())

@@ -25,6 +25,16 @@ from svtplay_dl.utils.text import exclude
 
 
 def get_multiple_media(urls, config):
+    """
+    Download media from multiple URLs sequentially.
+    
+    Validates output directory and downloads each URL with independent
+    configuration copies to avoid conflicts.
+    
+    Args:
+        urls: List of URLs to download
+        config: Configuration object with download settings
+    """
     if config.get("output") and os.path.isfile(config.get("output")):
         logging.error("Output must be a directory if used with multiple URLs")
         sys.exit(2)
@@ -40,6 +50,18 @@ def get_multiple_media(urls, config):
 
 
 def get_media(url, options, version="Unknown"):
+    """
+    Download media from a single URL.
+    
+    Main entry point for downloading media. Determines the appropriate service
+    handler for the URL, handles generic URLs and raw media files, then
+    initiates download of single video or all episodes.
+    
+    Args:
+        url: URL of media to download
+        options: Configuration object with download settings
+        version: Application version string for logging (default: "Unknown")
+    """
     if "http" not in url[:4]:
         url = f"http://{url}"
 
@@ -64,6 +86,17 @@ def get_media(url, options, version="Unknown"):
 
 
 def get_all_episodes(stream, url, options):
+    """
+    Download all episodes from a series or show.
+    
+    Finds all episodes using the service's find_all_episodes method and
+    downloads each one sequentially with progress logging.
+    
+    Args:
+        stream: Service handler instance for the show
+        url: Original URL of the show/series
+        options: Configuration object with download settings
+    """
     name = os.path.dirname(formatname({"basedir": True}, stream.config))
 
     if name and os.path.isfile(name):
@@ -94,6 +127,16 @@ def get_all_episodes(stream, url, options):
 
 
 def get_one_media(stream):
+    """
+    Download a single media item (video and subtitles).
+    
+    Main download workflow: validates filename, retrieves available streams,
+    selects quality, handles subtitles, downloads video, and performs
+    post-processing (merging, remuxing).
+    
+    Args:
+        stream: Service handler instance for the media
+    """
     # Make an automagic filename
     if not filename(stream):
         return

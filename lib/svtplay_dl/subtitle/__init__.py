@@ -20,6 +20,17 @@ from svtplay_dl.utils.text import decode_html_entities
 
 
 def subtitle_probe(config, url, **kwargs):
+    """
+    Probe a subtitle URL to determine its format and return appropriate subtitle handler.
+    
+    Args:
+        config: Configuration object containing download settings
+        url: URL of the subtitle file to probe
+        **kwargs: Additional arguments including httpobject, cookies, files
+        
+    Yields:
+        subtitle: Subtitle handler object configured for the detected format
+    """
     httpobject = kwargs.get("httpobject", None)
     if httpobject:
         http = httpobject
@@ -48,7 +59,22 @@ def subtitle_probe(config, url, **kwargs):
 
 
 class subtitle:
+    """
+    Subtitle handler class for downloading and converting various subtitle formats.
+    
+    Supports multiple subtitle formats including WEBVTT, TTML, JSON, SAMI, SMI, and raw formats.
+    """
+    
     def __init__(self, config, subtype, url, **kwargs):
+        """
+        Initialize subtitle handler.
+        
+        Args:
+            config: Configuration object containing download settings
+            subtype: Type of subtitle format (wrst, tt, json, sami, smi, raw, stpp, wrstsegment)
+            url: URL of the subtitle file
+            **kwargs: Additional arguments including subfix, name, output
+        """
         self.url = url
         self.subtitle = None
         self.config = config
@@ -64,6 +90,12 @@ class subtitle:
         return f"<Subtitle(type={self.subtype}, url={self.url} subfix={self.subfix}>"
 
     def download(self):
+        """
+        Download and convert subtitle file to SRT format or raw format.
+        
+        Handles various subtitle formats and converts them to SRT unless raw format is requested.
+        Checks for existing files to avoid overwriting unless forced.
+        """
         output_ext = "srt"
         if self.config.get("get_raw_subtitles"):
             output_ext = self.subtype
@@ -114,14 +146,38 @@ class subtitle:
             self.save_file(data)
 
     def save_file(self, data):
+        """
+        Save subtitle data to file with UTF-8 encoding.
+        
+        Args:
+            data: Subtitle text content to save
+        """
         filename = formatname(self.output, self.config)
         with open(filename, "w", encoding="utf-8") as file_d:
             file_d.write(data)
 
     def raw(self, subdata):
+        """
+        Return raw subtitle data without conversion.
+        
+        Args:
+            subdata: HTTP response object containing subtitle data
+            
+        Returns:
+            str: Raw subtitle text
+        """
         return subdata.text
 
     def tt(self, subdata):
+        """
+        Convert TTML (Timed Text Markup Language) subtitles to SRT format.
+        
+        Args:
+            subdata: HTTP response object containing TTML subtitle data
+            
+        Returns:
+            str: Subtitle data in SRT format
+        """
         i = 1
         subs = subdata.text
         return self._tt(subs, i)
@@ -164,6 +220,15 @@ class subtitle:
         return data
 
     def json(self, subdata):
+        """
+        Convert JSON subtitles to SRT format.
+        
+        Args:
+            subdata: HTTP response object containing JSON subtitle data
+            
+        Returns:
+            str: Subtitle data in SRT format
+        """
         data = json.loads(subdata.text)
         number = 1
         subs = ""
@@ -175,6 +240,15 @@ class subtitle:
         return subs
 
     def sami(self, subdata):
+        """
+        Convert SAMI (Synchronized Accessible Media Interchange) subtitles to SRT format.
+        
+        Args:
+            subdata: HTTP response object containing SAMI subtitle data
+            
+        Returns:
+            str: Subtitle data in SRT format
+        """
         text = subdata.text
         text = re.sub(r"&", "&amp;", text)
         tree = ET.fromstring(text)
@@ -201,6 +275,15 @@ class subtitle:
         return subs
 
     def smi(self, subdata):
+        """
+        Convert SMI subtitles to SRT format.
+        
+        Args:
+            subdata: HTTP response object containing SMI subtitle data
+            
+        Returns:
+            str: Subtitle data in SRT format
+        """
         if requests_version < 0x20300:
             subdata = subdata.content.decode("latin")
         else:
@@ -234,6 +317,15 @@ class subtitle:
         return text
 
     def wrst(self, subdata):
+        """
+        Convert WEBVTT subtitles to SRT format.
+        
+        Args:
+            subdata: HTTP response object containing WEBVTT subtitle data
+            
+        Returns:
+            str: Subtitle data in SRT format
+        """
         return self._wrst(subdata.text)
 
     def _wrst(self, data):
@@ -355,6 +447,19 @@ class subtitle:
 
 
 def _wrstsegments(entries: list, convert=False) -> str:
+    """
+    Convert segmented WEBVTT subtitle entries to SRT format.
+    
+    Processes multiple WEBVTT segments and combines them into a single SRT file,
+    handling timestamp adjustments and color conversions.
+    
+    Args:
+        entries: List of WEBVTT subtitle segment strings
+        convert: Whether to convert color tags to HTML font tags (default: False)
+        
+    Returns:
+        str: Combined subtitle data in SRT format
+    """
     time = 0
     subs = []
     for cont in entries:
@@ -414,6 +519,15 @@ def _wrstsegments(entries: list, convert=False) -> str:
 
 
 def _resolv(entries):
+    """
+    Resolve overlapping subtitle entries by merging consecutive timestamps.
+    
+    Args:
+        entries: List of subtitle entries with timestamps
+        
+    Returns:
+        tuple: (changed: bool, new_entries: list) indicating if changes were made and the updated entries
+    """
     skip = False
     changed = False
     new_entries = []
@@ -459,11 +573,29 @@ def timestr(msec):
 
 
 def timecolon(data):
+    """
+    Convert timestamp format from HH:MM:SS:MS to HH:MM:SS,MS.
+    
+    Args:
+        data: Timestamp string in format HH:MM:SS:MS
+        
+    Returns:
+        str: Timestamp in format HH:MM:SS,MS
+    """
     match = re.search(r"(\d+:\d+:\d+):(\d+)", data)
     return f"{match.group(1)},{match.group(2)}"
 
 
 def norm(name):
+    """
+    Normalize XML tag name by removing namespace prefix.
+    
+    Args:
+        name: XML tag name that may include namespace (e.g., "{namespace}tag")
+        
+    Returns:
+        str: Tag name without namespace prefix
+    """
     if name[0] == "{":
         _, tag = name[1:].split("}")
         return tag
@@ -472,6 +604,16 @@ def norm(name):
 
 
 def tt_text(node, data):
+    """
+    Extract text content from TTML XML node and its children.
+    
+    Args:
+        node: XML element node to extract text from
+        data: Accumulated text data string
+        
+    Returns:
+        str: Updated text data with extracted content
+    """
     if node.text:
         data += "%s\n" % node.text.strip(" \t\n\r")
     for i in node:
@@ -485,6 +627,15 @@ def tt_text(node, data):
 
 
 def strdate(datestring):
+    """
+    Parse SRT-style timestamp range from string.
+    
+    Args:
+        datestring: String containing timestamp range (e.g., "00:01:23.456 --> 00:01:25.789")
+        
+    Returns:
+        re.Match or None: Match object with timestamp components, or None if invalid
+    """
     match = re.search(r"^((\d+:\d+:\d+[\.,]*[0-9]*)?(\d+:\d+[\.,]*[0-9]*)?) --> ((\d+:\d+:\d+[\.,]*[0-9]*)?(\d+:\d+[\.,]*[0-9]*)?)[ ]*", datestring)
     if match and match.group(5) is None and match.group(6) is not None:
         match = re.search(r"^((\d+:\d+:\d+[\.,]*[0-9]*)?(\d+:\d+[\.,]*[0-9]*)?) --> ((\d+:\d+:\d+[\.,]*[0-9]*)?(\d+:\d+[\.,]*[0-9]*)?)$", datestring)
@@ -494,17 +645,45 @@ def strdate(datestring):
 
 
 def sec2str(seconds):
+    """
+    Convert seconds to SRT timestamp string format (HH:MM:SS.mmm).
+    
+    Args:
+        seconds: Time value in seconds (can be float)
+        
+    Returns:
+        str: Timestamp string in format HH:MM:SS.mmm
+    """
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return f"{int(h):02d}:{int(m):02d}:{s:06.3f}"
 
 
 def str2sec(string):
+    """
+    Convert timestamp string to seconds.
+    
+    Args:
+        string: Timestamp string in format HH:MM:SS or MM:SS or SS
+        
+    Returns:
+        float: Time value in seconds
+    """
     seconds = [3600, 60, 1]
     return sum(x * float(t) for x, t in zip(seconds[3 - len(string.split(":")) :], string.split(":")))
 
 
 def _wsrt_colors(convert, text):
+    """
+    Convert or remove color tags in WEBVTT subtitle text.
+    
+    Args:
+        convert: If True, convert color tags to HTML font tags; if False, remove all tags
+        text: Subtitle text with color tags
+        
+    Returns:
+        str: Processed text with converted or removed tags
+    """
     if convert:
         colors = {
             "30": "#000000",

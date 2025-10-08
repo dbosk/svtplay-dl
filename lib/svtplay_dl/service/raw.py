@@ -7,7 +7,21 @@ from svtplay_dl.service import Service
 
 
 class Raw(Service):
+    """
+    Service handler for downloading raw media files (M3U8 and MPD).
+    
+    Handles direct URLs to HLS playlist (.m3u8) and DASH manifest (.mpd) files.
+    """
+    
     def get(self):
+        """
+        Process raw media URL and yield media streams.
+        
+        Detects the type of media file (HLS or DASH) and delegates to appropriate parser.
+        
+        Yields:
+            VideoRetriever: Media stream objects for downloading
+        """
         filename = os.path.basename(self.url[: self.url.rfind("/")])
         self.output["title"] = filename
 

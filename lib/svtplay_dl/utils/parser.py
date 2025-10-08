@@ -70,6 +70,18 @@ class Options:
 
 
 def gen_parser(version="unknown"):
+    """
+    Generate command-line argument parser for svtplay-dl.
+    
+    Creates an ArgumentParser with all command-line options organized into groups
+    (general, quality, subtitle, all episodes, post-processing).
+    
+    Args:
+        version: Version string to display in --version output (default: "unknown")
+        
+    Returns:
+        ArgumentParser: Configured argument parser object
+    """
     parser = argparse.ArgumentParser(prog="svtplay-dl")
     general = parser.add_argument_group()
 
@@ -333,12 +345,30 @@ def gen_parser(version="unknown"):
 
 
 def parser(version):
+    """
+    Parse command-line arguments for svtplay-dl.
+    
+    Args:
+        version: Version string to pass to gen_parser
+        
+    Returns:
+        tuple: (parser, options) - ArgumentParser object and parsed options namespace
+    """
     parser = gen_parser(version)
     options = parser.parse_args()
     return parser, options
 
 
 def setup_defaults():
+    """
+    Create and populate an Options object with default configuration values.
+    
+    Sets default values for all configuration options including output settings,
+    quality preferences, subtitle options, and download behavior.
+    
+    Returns:
+        Options: Options object populated with default configuration values
+    """
     options = Options()
     options.set("output", None)
     options.set("subfolder", False)
@@ -402,6 +432,19 @@ def setup_defaults():
 
 
 def parsertoconfig(config, parser):
+    """
+    Transfer parsed command-line options to configuration object.
+    
+    Maps all command-line arguments from the parser to the configuration object
+    and applies special settings.
+    
+    Args:
+        config: Options object to populate with configuration
+        parser: Parsed argument namespace from ArgumentParser
+        
+    Returns:
+        Options: Configuration object with all settings applied
+    """
     config.set("output", parser.output)
     config.set("filename", parser.filename)
     config.set("subfolder", parser.subfolder)
@@ -460,6 +503,18 @@ def parsertoconfig(config, parser):
 
 
 def _special_settings(config):
+    """
+    Apply special configuration settings based on flag dependencies.
+    
+    Handles interdependent settings like subtitle requirements, proxy formatting,
+    and silent mode settings.
+    
+    Args:
+        config: Options object with base configuration
+        
+    Returns:
+        Options: Configuration object with special settings applied
+    """
     if config.get("require_subtitle"):
         if config.get("merge_subtitle"):
             config.set("merge_subtitle", True)
@@ -480,6 +535,18 @@ def _special_settings(config):
 
 
 def merge(old, new):
+    """
+    Merge new configuration values with old configuration.
+    
+    Updates old configuration with non-default values from new configuration.
+    
+    Args:
+        old: Existing configuration dictionary
+        new: New configuration values (list or dict)
+        
+    Returns:
+        Options: Merged configuration object
+    """
     if isinstance(new, list):
         new = {list(i.keys())[0]: i[list(i.keys())[0]] for i in new}
     config = setup_defaults()
@@ -496,6 +563,21 @@ def merge(old, new):
 
 
 def readconfig(config, configfile, service=None, preset=None):
+    """
+    Read and apply configuration from YAML configuration file.
+    
+    Loads configuration from file and merges it with existing config, applying
+    service-specific and preset-specific settings if provided.
+    
+    Args:
+        config: Base configuration object to merge with file config
+        configfile: Path to YAML configuration file
+        service: Optional service name for service-specific configuration
+        preset: Optional preset name for preset-specific configuration
+        
+    Returns:
+        Options: Configuration object with file settings applied
+    """
     global configdata
 
     if configfile and configdata is None:
